@@ -17,14 +17,18 @@ const dummy: Line[] = [
   { id: '3', title: 'Upgrade Storage', subtitle: '10 Mai 2025', amount: '€9,99' }
 ]
 
-const CardStack: React.FC = () => {
+const CardStack = () => {
   const [lines, setLines] = useState<Line[]>([])
   const [active, setActive] = useState<number | null>(null)
 
   useEffect(() => {
-        fetchTimeline(process.env.NEXT_PUBLIC_TENANT_ID || '', process.env.NEXT_PUBLIC_USER_ID || '')
-          .then(setLines)
-      }, [])}
+    fetchTimeline(process.env.NEXT_PUBLIC_TENANT_ID || '', process.env.NEXT_PUBLIC_USER_ID || '')
+      .then(setLines)
+  }, [])
+
+  return (
+    <div>
+      {/* Render cards here if needed */}
       <AnimatePresence>
         {active !== null && (
           <motion.div
@@ -34,7 +38,7 @@ const CardStack: React.FC = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              layoutId={\`card-\${active}\`}
+              layoutId={`card-${active}`}
               className="w-80 h-48 rounded-2xl p-6 bg-gradient-to-br from-gradient-from via-gradient-via to-gradient-to"
             >
               <h2 className="text-xl font-semibold">{lines[active].title}</h2>
