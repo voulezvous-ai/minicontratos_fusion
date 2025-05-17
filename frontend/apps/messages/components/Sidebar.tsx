@@ -7,11 +7,11 @@ interface Contact {
   name: string
 }
 
-const [contacts, setContacts] = React.useState<Channel[]>([]) = [
+const [contacts, setContacts] = React.useState<Contact[]>([
   { id: 'general', name: 'Geral' },
   { id: 'support', name: 'Suporte' },
   { id: 'marketing', name: 'Marketing' }
-]
+])
 
 interface Props {
   className?: string
@@ -25,7 +25,7 @@ const Sidebar: React.FC<Props> = ({ className }) => {
 
   return (
     <aside
-      className={\`flex flex-col bg-surface border-r border-surface \${className}\`}
+      className={`flex flex-col bg-surface border-r border-surface ${className}`}
     >
       <h2 className="p-3 text-sm font-semibold border-b border-surface">
         Canais

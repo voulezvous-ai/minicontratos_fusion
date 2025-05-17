@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create, StateCreator } from 'zustand'
 
 export type Mode = 'chat' | 'messages' | 'timeline'
 
@@ -11,6 +11,11 @@ interface AppState {
   autoLLM: boolean
   setMode: (m: Mode) => void
   setAutoLLM: (flag: boolean) => void
+  logs?: LogLine[]
+  selectedLog?: LogLine
+  loadLogs: (tenantId: string) => Promise<void>
+  selectLog: (log: LogLine) => void
+  updateLog: (l: LogLine) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -18,21 +23,21 @@ export const useAppStore = create<AppState>((set) => ({
   tenantId: process.env.NEXT_PUBLIC_TENANT_ID || '',
   userId: process.env.NEXT_PUBLIC_USER_ID || '',
   autoLLM: true,
-  setMode: (mode) => set({ mode }),
-  setAutoLLM: (flag) => set({ autoLLM: flag }),
-  ,
-loadLogs: async (tenantId) => {
-  const res = await fetch(`/logs?tenant_id=${tenantId}`)
-  const data = await res.json()
-  set({ logs: data })
-},
-selectLog: (log) => set({ selectedLog: log }),
-updateLog: (l) => set((s) => ({
-  logs: s.logs.map((o) => (o.id === l.id ? l : o)),
-  selectedLog: l
+  setMode: (mode: Mode) => set({ mode }),
+  setAutoLLM: (flag: boolean) => set({ autoLLM: flag }),
+  logs: [],
+  selectedLog: undefined,
+  loadLogs: async (tenantId: string) => {
+    const res = await fetch(`/logs?tenant_id=${tenantId}`)
+    const data: LogLine[] = await res.json()
+    set({ logs: data })
+  },
+  selectLog: (log: LogLine) => set({ selectedLog: log }),
+  updateLog: (l: LogLine) => set((s) => ({
+    logs: s.logs ? s.logs.map((o) => (o.id === l.id ? l : o)) : [],
+    selectedLog: l
+  }))
 }))
-}))
-
 
 // helper mapping modes to card face index
 export const faceIndex: Record<Mode, number> = { chat: 0, messages: 1, timeline: 2 }
