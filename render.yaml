@@ -1,0 +1,64 @@
+###############################################################################
+# VoulezVous • FlipApp • Render Blueprint
+# frontend (Next.js) + backend (FastAPI) + Redis (cache/TTL)
+###############################################################################
+services:
+  # ─────────────────────────── BACKEND ───────────────────────────
+  - name: flip-backend
+    type: web
+    env: python
+    plan: free           # upgr. to starter/standard p/ produção
+    rootDir: backend
+    buildCommand: |
+      pip install --upgrade -r requirements.txt
+    startCommand: |
+      uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          name: flip-redis
+          type: redis
+      - key: JWT_SECRET           # segredo gerado na primeira vez
+        generateValue: true
+      - key: LOG_PATH
+        value: /render/logs
+      - key: LOG_MAX_MB
+        value: "10"
+      - key: LINK_TTL_SEC
+        value: "7200"
+      # coloque a key real via dashboard ou Secret Files
+      - key: OPENAI_API_KEY
+        sync: false
+    autoDeploy: true
+    healthCheckPath: /metrics
+
+  # ────────────────────────── FRONTEND ──────────────────────────
+  - name: flip-frontend
+    type: web
+    env: node
+    plan: free
+    rootDir: frontend
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start -p $PORT
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE
+        fromService:
+          name: flip-backend
+          type: web
+      - key: NEXT_PUBLIC_TENANT_ID
+        value: voulezvous
+      - key: NEXT_PUBLIC_USER_ID
+        value: danvoulez
+    pullRequestPreviewsEnabled: false
+    autoDeploy: true
+
+databases:
+  # ─────────────────────────── REDIS ────────────────────────────
+  - name: flip-redis
+    type: redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []            # Rede interna somente
