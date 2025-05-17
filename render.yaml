@@ -1,15 +1,15 @@
 ###############################################################################
-# FlipApp • Render Blueprint  –  frontend + backend + Redis (free tier)
+# FlipApp • Render Blueprint – frontend + backend + Redis (free tier)
 ###############################################################################
 services:
-  # ───────── BACKEND ─────────
+  # ───────── BACKEND (FastAPI) ─────────
   - name: flip-backend
     type: web
     env: python
     rootDir: backend
     plan: free
     buildCommand: |
-      pip install --upgrade -r requirements.txt
+      pip install -r requirements.txt
     startCommand: |
       uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -21,42 +21,7 @@ services:
         generateValue: true
       - key: LOG_PATH
         value: /render/logs
-      - key: LINK_TTL_SEC
-        value: "7200"
       - key: LOG_MAX_MB
         value: "10"
-      # defina esta secret na UI do Render
-      - key: OPENAI_API_KEY
-        sync: false
-    autoDeploy: true
-    healthCheckPath: /metrics
-
-  # ───────── FRONTEND ─────────
-  - name: flip-frontend
-    type: web
-    env: node
-    rootDir: frontend
-    plan: free
-    buildCommand: |
-      npm ci
-      npm run build
-    startCommand: |
-      npm run start -p $PORT
-    envVars:
-      - key: NEXT_PUBLIC_API_BASE
-        fromService:
-          name: flip-backend
-          type: web
-      - key: NEXT_PUBLIC_TENANT_ID
-        value: voulezvous
-      - key: NEXT_PUBLIC_USER_ID
-        value: danvoulez
-    pullRequestPreviewsEnabled: false
-    autoDeploy: true
-
-databases:
-  # ───────── REDIS ─────────
-  - name: flip-redis
-    databaseType: redis          # <— campo correto
-    plan: free
-    ipAllowList: []              # acessível só na rede Render
+      - key: LINK_TTL_SEC
+        value: "
