@@ -1,5 +1,19 @@
-flask
-flask-cors
-flask-socketio
-eventlet
+# ─── Produção ───────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+redis
+PyJWT
 openai
+prometheus-fastapi-instrumentator
+python-dotenv
+
+# ─── Opcional (WebSocket, se usar) ─────────────────────────────────────────
+python-socketio
+aiofiles                      # se servir arquivos estáticos
+
+# ─── Desenvolvimento / Testes ───────────────────────────────────────────────
+pytest
+pytest-asyncio
+httpx
+flake8
+black
