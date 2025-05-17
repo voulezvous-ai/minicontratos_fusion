@@ -1,6 +1,3 @@
-###############################################################################
-# FlipApp • Render Blueprint – frontend + backend + Redis (free tier)
-###############################################################################
 services:
   # ───────── BACKEND (FastAPI) ─────────
   - name: flip-backend
@@ -20,8 +17,41 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: LOG_PATH
-        value: /render/logs
+        value: "/render/logs"
       - key: LOG_MAX_MB
         value: "10"
       - key: LINK_TTL_SEC
-        value: "
+        value: "7200"
+      - key: OPENAI_API_KEY
+        sync: false
+    autoDeploy: true
+    healthCheckPath: /metrics
+
+  # ───────── FRONTEND (Next.js) ─────────
+  - name: flip-frontend
+    type: web
+    env: node
+    rootDir: frontend
+    plan: free
+    buildCommand: |
+      npm ci
+      npm run build
+    startCommand: |
+      npm run start -p $PORT
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE
+        fromService:
+          name: flip-backend
+          type: web
+      - key: NEXT_PUBLIC_TENANT_ID
+        value: "voulezvous"
+      - key: NEXT_PUBLIC_USER_ID
+        value: "danvoulez"
+    pullRequestPreviewsEnabled: false
+    autoDeploy: true
+
+  # ───────── REDIS (gerenciado) ─────────
+  - name: flip-redis
+    type: redis
+    plan: free
+    ipAllowList: []
