@@ -10,21 +10,21 @@ interface CardProps {
   onClick?: () => void
 }
 
-const Card: React.FC<CardProps> = ({
+function Card({
   index,
   total,
   title,
   subtitle,
   amount,
   onClick
-}) => {
+}: CardProps) {
   const offset = (total - index) * 8
   return (
     <motion.div
       onClick={onClick}
       className="absolute left-0 right-0 mx-auto w-72 h-44 rounded-2xl px-6 py-4 cursor-pointer select-none bg-gradient-to-br from-gradient-from via-gradient-via to-gradient-to text-primary"
       style={{ top: offset }}
-      layoutId={\`card-\${index}\`}
+      layoutId={`card-${index}`}
       initial={{ scale: 1 }}
       whileHover={{ scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
