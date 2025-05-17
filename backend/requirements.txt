@@ -1,3 +1,5 @@
+# backend/requirements.txt
+
 Flask
 Flask-Cors
 Flask-SocketIO
@@ -9,7 +11,3 @@ PyJWT
 openai
 python-dotenv
 prometheus-flask-exporter
-
-# Dev/Test
-pytest
-httpx
