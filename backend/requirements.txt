@@ -1,13 +1,9 @@
-# backend/requirements.txt
-
 Flask
 Flask-Cors
 Flask-SocketIO
 eventlet
 gunicorn
-
-redis
-PyJWT
-openai
-python-dotenv
 prometheus-flask-exporter
+redis
+python-dotenv
+openai
