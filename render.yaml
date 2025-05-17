@@ -1,16 +1,13 @@
-# render.yaml (repo root)
-
 services:
-  # ───────── BACKEND (Flask + SocketIO) ─────────
   - name: flip-backend
     type: web
     env: python
-    plan: free
     rootDir: backend
+    plan: free
     buildCommand: |
       pip install -r requirements.txt
     startCommand: |
-      gunicorn -k eventlet -w 1 app:app --bind 0.0.0.0:$PORT
+      gunicorn --worker-class eventlet -w 1 app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: REDIS_URL
         fromService:
@@ -28,14 +25,13 @@ services:
       - key: OPENAI_API_KEY
         sync: false
     autoDeploy: true
-    healthCheckPath: /healthz
+    healthCheckPath: /
 
-  # ───────── FRONTEND (Next.js) ─────────
   - name: flip-frontend
     type: web
     env: node
-    plan: free
     rootDir: frontend
+    plan: free
     buildCommand: |
       npm ci
       npm run build
@@ -51,10 +47,8 @@ services:
         value: "voulezvous"
       - key: NEXT_PUBLIC_USER_ID
         value: "danvoulez"
-    pullRequestPreviewsEnabled: false
     autoDeploy: true
 
-  # ───────── REDIS (gerenciado) ─────────
   - name: flip-redis
     type: redis
     plan: free
