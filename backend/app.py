@@ -1,94 +1,107 @@
+# backend/app.py
+
+# ⚠️ PATCH DO EVENTLET DEVE VIR ANTES DE TUDO
+import eventlet
+eventlet.monkey_patch()
+
+import os
+from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, join_room, emit
-import uuid, os, openai, datetime
+from flask_socketio import SocketIO
+from prometheus_flask_exporter import PrometheusMetrics
+import redis
+import uuid
+import datetime
+import json
 
-FRONT_ORIGIN = os.getenv("FRONT_ORIGIN", "http://localhost:3000")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Initialise Flask & SocketIO
+# Inicializa Flask
 app = Flask(__name__)
-CORS(app, resources={r"*": {"origins": FRONT_ORIGIN}})
-socketio = SocketIO(app, cors_allowed_origins=FRONT_ORIGIN)
+CORS(app)
 
-# Helper to talk to OpenAI (if available)
-def ask_llm(messages, model="gpt-4o-mini"):
-    if not OPENAI_API_KEY:
-        return "LLM indisponível."
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
-    resp = client.chat.completions.create(model=model, messages=messages)
-    return resp.choices[0].message.content
+# Prometheus depois da app estar pronta
+metrics = PrometheusMetrics(app)
 
-# ─────────── REST endpoints ─────────── #
+# WebSocket
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.post("/process_request")
+# Diretório de logs
+LOG_DIR = Path("./logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+# Redis opcional
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+redis_client = redis.Redis.from_url(REDIS_URL)
+
+# Helper: valida e salva log
+def append_log(tenant_id, log: dict, ghost: bool = False):
+    file_path = LOG_DIR / f"logline.{tenant_id}.jsonl"
+    log['id'] = str(uuid.uuid4())
+    log['when'] = datetime.datetime.utcnow().isoformat()
+    log['ghost'] = ghost
+    log['valid'] = not ghost
+    required = ["who", "did", "this", "when", "confirmed_by", "if_ok", "if_doubt", "if_not", "status"]
+    log['missing'] = [k for k in required if k not in log or not log[k]]
+    with open(file_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(log, ensure_ascii=False) + "\n")
+    return log
+
+# Helper: leitura
+def read_logs(tenant_id):
+    file_path = LOG_DIR / f"logline.{tenant_id}.jsonl"
+    if not file_path.exists():
+        return []
+    with open(file_path, encoding="utf-8") as f:
+        return [json.loads(line) for line in f]
+
+# POST /process_request → registra uma LogLine com campos mínimos
+@app.route("/process_request", methods=["POST"])
 def process_request():
-    data = request.json or {}
-    resp = {
-        "id": str(uuid.uuid4())[:8],
-        "valid": True,
-        "ghost": False,
-        "missing": []
+    data = request.json
+    tenant = data.get("tenant_id", "default")
+    user = data.get("user_id", "unknown")
+    text = data.get("text", "")
+    log = {
+        "who": user,
+        "did": "send_message",
+        "this": text,
+        "confirmed_by": "system",
+        "if_ok": "responder",
+        "if_doubt": "aguardar humano",
+        "if_not": "descartar",
+        "status": "pending"
     }
+    ghost = len(text.strip()) < 3
+    saved = append_log(tenant, log, ghost=ghost)
+    return jsonify(saved)
 
-    # Quando a origem for o módulo 'messages', invoca o LLM central
-    if data.get("channel") == "messages":
-        llm_answer = ask_llm([
-            { "role": "system", "content": "Você é um atendente virtual da VoulezVous." },
-            { "role": "user",   "content": data.get("text", "") }
-        ])
-        resp["assistant_text"] = llm_answer
+# GET /logs?tenant_id=abc
+@app.route("/logs", methods=["GET"])
+def get_logs():
+    tenant = request.args.get("tenant_id", "default")
+    return jsonify(read_logs(tenant))
 
-        # Opcional: envia a mensagem do assistente para todos no canal via WS
-        socketio.emit(
-            "message",
-            {
-                "t": "message",
-                "tenant": data.get("tenant_id"),
-                "channel": data.get("channel"),
-                "user": "assistant",
-                "payload": { "text": llm_answer, "ts": datetime.datetime.utcnow().isoformat() }
-            },
-            to=f"{data.get('tenant_id')}:{data.get('channel')}",
-            namespace="/mcp"
-        )
+# PATCH /logs/<log_id> → atualiza log incompleto
+@app.route("/logs/<log_id>", methods=["PATCH"])
+def patch_log(log_id):
+    tenant = request.args.get("tenant_id", "default")
+    logs = read_logs(tenant)
+    match = next((l for l in logs if l.get("id") == log_id), None)
+    if not match:
+        return abort(404, "Log not found")
+    updates = request.json or {}
+    for k, v in updates.items():
+        if k in match:
+            match[k] = v
+    match["valid"] = True
+    match["when"] = datetime.datetime.utcnow().isoformat()
+    append_log(tenant, match, ghost=False)
+    return jsonify(match)
 
-    return jsonify(resp)
-
-@app.get("/channels/<tenant_id>")
-def list_channels(tenant_id):
-    return jsonify([
-        {"id": "general",  "name": "Geral"},
-        {"id": "support",  "name": "Suporte"},
-        {"id": "marketing","name": "Marketing"}
-    ])
-
-@app.get("/timeline/<tenant_id>/<user_id>")
-def timeline(tenant_id, user_id):
-    return jsonify([
-        {"id": "1", "title": "Assinatura Pro", "subtitle": "15 Mai 2025", "amount": "€19,90"},
-        {"id": "2", "title": "Cashback",       "subtitle": "12 Mai 2025", "amount": "€-4,50"},
-    ])
-
-@app.post("/llm/chat")
-def llm_chat():
-    body = request.json or {}
-    if not OPENAI_API_KEY:
-        return jsonify({"error": "OPENAI_API_KEY not set"}), 500
-    answer = ask_llm(body.get("messages", []), body.get("model", "gpt-4o-mini"))
-    return jsonify({"role": "assistant", "content": answer})
-
-# ───────── WebSocket MCP ───────── #
-@socketio.on("connect", namespace="/mcp")
-def mcp_connect():
-    tenant = request.args.get("tenant")
-    channel = request.args.get("channel")
-    join_room(f"{tenant}:{channel}")
-
-@socketio.on("message", namespace="/mcp")
-def mcp_message(msg):
-    room = f"{msg.get('tenant')}:{msg.get('channel')}"
-    emit("message", msg, to=room)
+# Healthcheck
+@app.route("/", methods=["GET"])
+def health():
+    return "FlipApp backend OK"
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=8000, debug=True)
+    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
