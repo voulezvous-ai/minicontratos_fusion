@@ -13,7 +13,7 @@ services:
       - key: REDIS_URL
         fromService:
           name: flip-redis
-          type: redis
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: LOG_PATH
@@ -42,7 +42,7 @@ services:
       - key: NEXT_PUBLIC_API_BASE
         fromService:
           name: flip-backend
-          type: web
+          property: url
       - key: NEXT_PUBLIC_TENANT_ID
         value: "voulezvous"
       - key: NEXT_PUBLIC_USER_ID
