@@ -1,19 +1,15 @@
-# ─── Produção ───────────────────────────────────────────────────────────────
-fastapi
-uvicorn[standard]
+Flask
+Flask-Cors
+Flask-SocketIO
+eventlet
+gunicorn
+
 redis
 PyJWT
 openai
-prometheus-fastapi-instrumentator
 python-dotenv
+prometheus-flask-exporter
 
-# ─── Opcional (WebSocket, se usar) ─────────────────────────────────────────
-python-socketio
-aiofiles                      # se servir arquivos estáticos
-
-# ─── Desenvolvimento / Testes ───────────────────────────────────────────────
+# Dev/Test
 pytest
-pytest-asyncio
 httpx
-flake8
-black
