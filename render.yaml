@@ -1,17 +1,23 @@
+# render.yaml (must live at the repo root)
+
+###############################################################################
+# FlipApp • Render Blueprint – frontend + backend + Redis (free tier)         #
+###############################################################################
+
 services:
   # ───────── BACKEND (FastAPI) ─────────
   - name: flip-backend
     type: web
     env: python
-    rootDir: backend
     plan: free
+    rootDir: backend
     buildCommand: |
       pip install -r requirements.txt
     startCommand: |
       uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: REDIS_URL
-        fromService:
+        fromDatabase:
           name: flip-redis
           property: connectionString
       - key: JWT_SECRET
@@ -23,16 +29,16 @@ services:
       - key: LINK_TTL_SEC
         value: "7200"
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false       # mark as secret in Dashboard, not here
     autoDeploy: true
-    healthCheckPath: /metrics
+    healthCheckPath: /healthz
 
   # ───────── FRONTEND (Next.js) ─────────
   - name: flip-frontend
     type: web
     env: node
-    rootDir: frontend
     plan: free
+    rootDir: frontend
     buildCommand: |
       npm ci
       npm run build
@@ -42,7 +48,8 @@ services:
       - key: NEXT_PUBLIC_API_BASE
         fromService:
           name: flip-backend
-          property: internalUrl
+          type: web
+          envVarKey: RENDER_INTERNAL_HOST   # will resolve to e.g. 10.0.0.123:8000
       - key: NEXT_PUBLIC_TENANT_ID
         value: "voulezvous"
       - key: NEXT_PUBLIC_USER_ID
@@ -50,8 +57,8 @@ services:
     pullRequestPreviewsEnabled: false
     autoDeploy: true
 
+databases:
   # ───────── REDIS (gerenciado) ─────────
   - name: flip-redis
     type: redis
     plan: free
-    ipAllowList: []
