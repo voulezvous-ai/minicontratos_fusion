@@ -30,15 +30,24 @@ const LogLineCard: React.FC<{ log: LogLine; onSelect?: () => void }> = ({
         )}
       </div>
       <div role="button" aria-label="Log line" className="grid grid-cols-2 text-xs gap-1 mt-2">
-  {Object.entries(log).map(([k, v]) => (
-    k === 'id' || k === 'missing' || k === 'ghost' || k === 'valid'
-      ? null :
-      <div role="button" aria-label="Log line"
-        key={k}
-        className={\`col-span-2 \${fieldClasses(k, log.missing)}\`}
-      >
-        <span className="font-semibold">{k}: </span>
-        <span>{String(v ?? '')}</span>
+        {Object.entries(log).map(([k, v]) => (
+          k === 'id' || k === 'missing' || k === 'ghost' || k === 'valid'
+            ? null
+            : (
+              <div
+                role="button"
+                aria-label="Log line"
+                key={k}
+                className={`col-span-2 ${fieldClasses(log.missing?.includes?.(k))}`}
+              >
+                <span className="font-semibold">{k}: </span>
+                <span>{String(v ?? '')}</span>
+              </div>
+            )
+        ))}
       </div>
-  ))}
-</div>
+    </div>
+  )
+}
+
+export default LogLineCard

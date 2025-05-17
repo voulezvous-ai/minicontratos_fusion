@@ -1,13 +1,19 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAppStore } from '../state/useAppStore'
 import LogLineEditor from './LogLineEditor'
-import React, { useState } from 'react'
 
 const RightMenu: React.FC<{ className?: string }> = ({ className }) => {
-  const { mode, autoLLM, setAutoLLM } = useAppStore()
+  const { mode, autoLLM, setAutoLLM, selectedLog } = useAppStore()
+  const [editorOpen, setEditorOpen] = useState(false)
+
+  // Dummy handlers for now
+  const handleComplete = () => {}
+  const confirmEvent = () => {}
+  const invalidate = () => {}
+
   return (
     <aside
-      className={\`bg-surface text-primary p-4 space-y-4 \${className}\`}
+      className={"bg-surface text-primary p-4 space-y-4 " + (className || "")}
     >
       <h2 className="text-sm font-semibold">Painel</h2>
       <p className="text-xs text-secondary">Modo atual: {mode}</p>

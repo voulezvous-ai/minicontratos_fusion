@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAppStore } from '../state/useAppStore'
 
 const OnboardingOverlay = () => {
-  const { tenantId, userId, setTenant, setUser } = useAppStore()
+  const { tenantId, userId } = useAppStore()
   const [tenant, setTenantLocal] = useState('')
   const [user, setUserLocal] = useState('')
 
@@ -12,8 +12,7 @@ const OnboardingOverlay = () => {
     if (!tenant || !user) return
     localStorage.setItem('tenantId', tenant)
     localStorage.setItem('userId', user)
-    setTenant(tenant)
-    setUser(user)
+    window.location.reload()
   }
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { LogLine } from './LogLineCard'
+import { LogLine } from '../types/log'
 import { useAppStore } from '../state/useAppStore'
 
 interface Props {

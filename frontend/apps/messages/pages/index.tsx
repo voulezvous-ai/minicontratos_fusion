@@ -1,9 +1,9 @@
 import React from 'react'
 import MainPanel from '../../../components/MainPanel'
-import Messages from '../components/Messages'
+import ChatWindow from '../components/ChatWindow'
 
 const MessagesPage = () => {
-  return <Messages />
+  return <ChatWindow />
 }
 
 export default MessagesPage
