@@ -11,27 +11,23 @@
     "ci": "npm run lint && npm run test && npm run test:e2e && next build"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "typescript": "latest",
-    "tailwindcss": "latest",
-    "postcss": "latest",
-    "autoprefixer": "latest",
+    "next": "15.2.4",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8",
+    "autoprefixer": "^10.4.20",
     "zustand": "latest",
     "framer-motion": "latest",
-    "lucide-react": "latest"
+    "lucide-react": "^0.454.0"
   },
   "devDependencies": {
-    "@types/react": "latest",
-    "@types/node": "latest",
-    "@testing-library/react": "latest",
-    "@testing-library/jest-dom": "latest",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/node": "^22",
     "jest": "latest",
     "ts-jest": "latest",
-    "@types/jest": "latest",
-    "@playwright/test": "latest",
-    "jest-axe": "latest",
-    "axe-core": "latest"
+    "@playwright/test": "latest"
   }
 }
