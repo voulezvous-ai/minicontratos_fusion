@@ -1,14 +1,13 @@
 ###############################################################################
-# VoulezVous • FlipApp • Render Blueprint
-# frontend (Next.js) + backend (FastAPI) + Redis (cache/TTL)
+# FlipApp • Render Blueprint  –  frontend + backend + Redis (free tier)
 ###############################################################################
 services:
-  # ─────────────────────────── BACKEND ───────────────────────────
+  # ───────── BACKEND ─────────
   - name: flip-backend
     type: web
     env: python
-    plan: free           # upgr. to starter/standard p/ produção
     rootDir: backend
+    plan: free
     buildCommand: |
       pip install --upgrade -r requirements.txt
     startCommand: |
@@ -18,26 +17,26 @@ services:
         fromService:
           name: flip-redis
           type: redis
-      - key: JWT_SECRET           # segredo gerado na primeira vez
+      - key: JWT_SECRET
         generateValue: true
       - key: LOG_PATH
         value: /render/logs
-      - key: LOG_MAX_MB
-        value: "10"
       - key: LINK_TTL_SEC
         value: "7200"
-      # coloque a key real via dashboard ou Secret Files
+      - key: LOG_MAX_MB
+        value: "10"
+      # defina esta secret na UI do Render
       - key: OPENAI_API_KEY
         sync: false
     autoDeploy: true
     healthCheckPath: /metrics
 
-  # ────────────────────────── FRONTEND ──────────────────────────
+  # ───────── FRONTEND ─────────
   - name: flip-frontend
     type: web
     env: node
-    plan: free
     rootDir: frontend
+    plan: free
     buildCommand: |
       npm ci
       npm run build
@@ -56,9 +55,8 @@ services:
     autoDeploy: true
 
 databases:
-  # ─────────────────────────── REDIS ────────────────────────────
+  # ───────── REDIS ─────────
   - name: flip-redis
-    type: redis
+    databaseType: redis          # <— campo correto
     plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []            # Rede interna somente
+    ipAllowList: []              # acessível só na rede Render
